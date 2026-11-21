@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Angel Portfolio</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">▲</span> Angel Portfolio</div>
+    <div class="focus" id="focus" hidden>
+      Showing <strong id="focusName"></strong> <button class="link" id="clearFocus">Show all</button>
+    </div>
+    <button class="btn primary" id="addInvestment">+ Add investment</button>
+  </header>
+
+  <main class="grid">
+    <!-- 1. PORTFOLIO -->
+    <section class="panel portfolio">
+      <div class="panel-head"><h2>Portfolio</h2></div>
+      <div class="hero">
+        <div class="label">Total portfolio value (AUM)</div>
+        <div class="big" id="totalValue">$0</div>
+        <div class="delta" id="totalDelta"></div>
+      </div>
+      <svg id="chart" class="chart" viewBox="0 0 600 160" preserveAspectRatio="none" role="img" aria-label="Capital deployed over time"></svg>
+      <div class="stats">
+        <div><span class="label">Invested</span><span id="statInvested">$0</span></div>
+        <div><span class="label">MOIC</span><span id="statMoic">–</span></div>
+        <div><span class="label">Companies</span><span id="statCount">0</span></div>
+        <div><span class="label">Avg check</span><span id="statAvg">–</span></div>
+      </div>
+      <div class="goal">
+        <div class="goal-text"><span id="goalText"></span></div>
+        <div class="dots" id="goalDots"></div>
+      </div>
+      <h3>Holdings</h3>
+      <ul class="holdings" id="holdings"></ul>
+    </section>
+
+    <!-- 2. NEWS -->
+    <section class="panel news">
+      <div class="panel-head">
+        <h2>News</h2>
+        <div class="actions">
+          <button class="btn small" id="saveNewsBtn">+ Save a link</button>
+          <button class="btn small" id="refreshNews" title="Refresh">↻</button>
+        </div>
+      </div>
+      <p class="hint">Press releases and articles from Google News. Paste LinkedIn posts or investor updates with “Save a link”.</p>
+      <ul class="newslist" id="newsList"><li class="empty">Add an investment to see news.</li></ul>
+    </section>
+
+    <!-- 3. DATA ROOM -->
+    <section class="panel docs">
+      <div class="panel-head"><h2>Data room</h2></div>
+      <form id="uploadForm" class="upload">
+        <label class="drop" id="drop">
+          <input type="file" id="fileInput" name="files" multiple hidden />
+          <span>Drop SAFEs, side letters, cap tables, updates… or <u>browse</u></span>
+          <span class="chosen" id="chosen"></span>
+        </label>
+        <div class="row">
+          <select name="investmentId" id="uploadCompany"></select>
+          <select name="docType">
+            <option>SAFE</option><option>Convertible note</option><option>Stock purchase agreement</option>
+            <option>Side letter</option><option>Cap table</option><option>Investor update</option>
+            <option>Pitch deck</option><option>Tax (K-1 / 1099)</option><option>Wire confirmation</option><option>Other</option>
+          </select>
+          <input name="note" placeholder="Note (optional)" />
+          <button class="btn primary" type="submit">Upload</button>
+        </div>
+      </form>
+      <table class="doctable">
+        <thead><tr><th>Document</th><th>Company</th><th>Type</th><th>Added</th><th></th></tr></thead>
+        <tbody id="docRows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Investment modal -->
+  <dialog id="invDialog">
+    <form id="invForm" method="dialog">
+      <h2 id="invTitle">Add investment</h2>
+      <div class="formgrid">
+        <label>Company*<input name="company" required /></label>
+        <label>Website<input name="website" placeholder="https://" /></label>
+        <label>Date invested<input name="date" type="date" /></label>
+        <label>Amount invested ($)<input name="amount" type="number" step="any" min="0" /></label>
+        <label>Instrument
+          <select name="instrument"><option>SAFE (post-money)</option><option>SAFE (pre-money)</option><option>Convertible note</option><option>Priced equity</option><option>SPV / Syndicate</option><option>Other</option></select>
+        </label>
+        <label>Stage
+          <select name="stage"><option>Pre-seed</option><option>Seed</option><option>Series A</option><option>Series B+</option><option>Other</option></select>
+        </label>
+        <label>Valuation cap ($)<input name="valuationCap" type="number" step="any" min="0" /></label>
+        <label>Discount (%)<input name="discount" type="number" step="any" min="0" max="100" /></label>
+        <label>Current value ($)<input name="currentValue" type="number" step="any" min="0" placeholder="Defaults to amount invested" /></label>
+        <label>Status
+          <select name="status"><option>Active</option><option>Exited</option><option>Written off</option></select>
+        </label>
+        <label>Sector<input name="sector" placeholder="e.g. Fintech, AI, Health" /></label>
+        <label>LinkedIn page<input name="linkedinUrl" placeholder="https://linkedin.com/company/…" /></label>
+        <label class="wide">News search (optional)<input name="newsQuery" placeholder='Defaults to "Company name". e.g. "Acme" AND (startup OR raises)' /></label>
+        <label class="wide">Notes<textarea name="notes" rows="3" placeholder="Thesis, founders, pro-rata rights, info rights…"></textarea></label>
+      </div>
+      <p class="hint">Tip: update “Current value” when the company raises a new round — each change is kept as a mark in the position history.</p>
+      <div class="dialog-actions">
+        <button class="btn danger" type="button" id="deleteInv" hidden>Delete</button>
+        <span class="spacer"></span>
+        <button class="btn" value="cancel" formnovalidate>Cancel</button>
+        <button class="btn primary" id="saveInv" value="save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Save news modal -->
+  <dialog id="newsDialog">
+    <form id="newsForm" method="dialog">
+      <h2>Save a link</h2>
+      <div class="formgrid">
+        <label class="wide">Company<select name="investmentId" id="newsCompany"></select></label>
+        <label class="wide">Link<input name="url" type="url" placeholder="https://www.linkedin.com/posts/…" /></label>
+        <label class="wide">Title<input name="title" placeholder="e.g. Founder announces seed round" /></label>
+        <label>Source<input name="source" placeholder="LinkedIn" /></label>
+        <label>Date<input name="date" type="date" /></label>
+      </div>
+      <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button class="btn" value="cancel" formnovalidate>Cancel</button>
+        <button class="btn primary" value="save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "angel-investing",
+  "version": "1.0.0",
+  "description": "A private, Robinhood-style dashboard for angel investments: portfolio, news, and a data room.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dealfl0ww/angel-investing.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dealfl0ww/angel-investing/issues"
+  },
+  "homepage": "https://github.com/dealfl0ww/angel-investing#readme",
+  "dependencies": {
+    "express": "^4.22.3",
+    "fast-xml-parser": "^5.12.1",
+    "multer": "^2.5.0"
+  },
+  "private": true
+}

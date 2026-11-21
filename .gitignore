@@ -1,0 +1,4 @@
+node_modules/
+# Your private portfolio data and uploaded documents (SAFEs etc.) — never commit these
+data/
+.env
