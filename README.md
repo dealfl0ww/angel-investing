@@ -21,6 +21,28 @@ npm start
 
 Then open http://localhost:3000.
 
+## Use it as an app on your phone
+
+The app installs to your phone's home screen. It then opens full-screen like a regular app, with a tab bar for Portfolio, News and Documents. Your computer stays the server, and your phone connects to it privately through [Tailscale](https://tailscale.com), which is free for personal use. Nothing is exposed to the public internet.
+
+1. **Set a password and start the app** on your computer:
+   ```bash
+   APP_PASSWORD='choose-a-long-password' TRUST_PROXY=1 npm start
+   ```
+2. **Install Tailscale** on your computer and your phone, and sign in to the same account on both.
+3. **Give the app a private HTTPS address** by running this on your computer:
+   ```bash
+   tailscale serve --bg 3000
+   ```
+   It prints an address like `https://your-computer.tail1234.ts.net`.
+4. **On your phone**, open that address and log in.
+   - **iPhone:** in Safari, tap Share → **Add to Home Screen**.
+   - **Android:** in Chrome, tap ⋮ → **Install app** (or **Add to Home screen**).
+
+Your computer needs to be on, with the app running, for your phone to reach it. To keep it running in the background, use a process manager such as `pm2`, or a macOS login item.
+
+If the password is missing, the app refuses to start whenever it's reachable from other devices (`HOST=0.0.0.0`). Logins last 90 days, and too many wrong passwords lock that device out for 15 minutes.
+
 ## Where your data lives
 
 - `data/db.json` holds investments, saved links and document details.

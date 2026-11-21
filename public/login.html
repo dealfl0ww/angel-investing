@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0d0e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Angel" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <title>Angel Portfolio</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="login-page">
+  <form class="login" id="login">
+    <div class="brand"><span class="logo">▲</span> Angel Portfolio</div>
+    <label>Password<input type="password" name="password" autocomplete="current-password" autofocus required /></label>
+    <button class="btn primary" type="submit">Log in</button>
+    <p class="err" id="err" role="alert"></p>
+  </form>
+  <script>
+    document.getElementById('login').onsubmit = async (e) => {
+      e.preventDefault();
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: e.target.password.value }) });
+      if (r.ok) location.replace('/');
+      else document.getElementById('err').textContent = (await r.json().catch(() => ({}))).error || 'Login failed';
+    };
+  </script>
+</body>
+</html>

@@ -30,6 +30,7 @@ async function api(method, url, body) {
   if (body instanceof FormData) opts.body = body;
   else if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
   const r = await fetch(url, opts);
+  if (r.status === 401 && !url.startsWith('/api/login')) { location.href = '/login'; throw new Error('Login required'); }
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `Request failed (${r.status})`);
   return r.status === 204 ? null : r.json();
 }
@@ -276,5 +277,18 @@ $('#docRows').addEventListener('click', async (e) => {
   state.documents = state.documents.filter((d) => d.id !== b.dataset.deldoc);
   renderDocs();
 });
+
+// ---------- Phone tabs ----------
+function setTab(tab) {
+  $('#main').dataset.tab = tab;
+  for (const b of document.querySelectorAll('#tabbar button')) b.classList.toggle('on', b.dataset.tab === tab);
+  window.scrollTo(0, 0);
+}
+$('#tabbar').addEventListener('click', (e) => { const b = e.target.closest('button[data-tab]'); if (b) setTab(b.dataset.tab); });
+
+// ---------- Login / install ----------
+api('GET', '/api/me').then((me) => { $('#logout').hidden = !me.passwordProtected; }).catch(() => {});
+$('#logout').onclick = async () => { await api('POST', '/api/logout'); location.href = '/login'; };
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 
 load().catch((e) => toast(e.message));

@@ -51,6 +51,65 @@ function cleanInvestment(body, existing = {}) {
 
 // ---------- app ----------
 const app = express();
+app.disable('x-powered-by');
+if (process.env.TRUST_PROXY) app.set('trust proxy', 1); // set when running behind HTTPS on a cloud host
+
+// ---------- password protection ----------
+// Set APP_PASSWORD to require a login. Required whenever the app is reachable from other devices.
+const APP_PASSWORD = process.env.APP_PASSWORD || '';
+const LOOPBACK = ['127.0.0.1', 'localhost', '::1'].includes(HOST);
+if (!APP_PASSWORD && !LOOPBACK) {
+  console.error('Refusing to start: set APP_PASSWORD before making the app reachable from other devices (HOST=' + HOST + ').');
+  process.exit(1);
+}
+const SECRET_FILE = path.join(DATA_DIR, 'session-secret');
+if (!fs.existsSync(SECRET_FILE)) fs.writeFileSync(SECRET_FILE, crypto.randomBytes(32).toString('hex'), { mode: 0o600 });
+const SESSION_SECRET = fs.readFileSync(SECRET_FILE, 'utf8').trim();
+const SESSION_DAYS = 90;
+const sign = (v) => crypto.createHmac('sha256', SESSION_SECRET + APP_PASSWORD).update(v).digest('base64url');
+const sha = (v) => crypto.createHash('sha256').update(v).digest();
+
+function readCookie(req, name) {
+  const m = (req.headers.cookie || '').split(/;\s*/).find((c) => c.startsWith(name + '='));
+  return m ? decodeURIComponent(m.slice(name.length + 1)) : null;
+}
+function isLoggedIn(req) {
+  if (!APP_PASSWORD) return true;
+  const c = readCookie(req, 'ap_session');
+  if (!c) return false;
+  const [exp, sig] = c.split('.');
+  if (!exp || !sig || Number(exp) < Date.now()) return false;
+  const good = sign(exp);
+  return sig.length === good.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(good));
+}
+const failures = new Map(); // ip -> { count, until }
+app.post('/api/login', express.json(), (req, res) => {
+  const ip = req.ip;
+  const f = failures.get(ip);
+  if (f && f.count >= 8 && f.until > Date.now()) return res.status(429).json({ error: 'Too many attempts. Try again in 15 minutes.' });
+  const ok = APP_PASSWORD && crypto.timingSafeEqual(sha(String(req.body?.password ?? '')), sha(APP_PASSWORD));
+  if (!ok) {
+    const n = f && f.until > Date.now() ? f.count + 1 : 1;
+    failures.set(ip, { count: n, until: Date.now() + 15 * 60 * 1000 });
+    return res.status(401).json({ error: 'Wrong password' });
+  }
+  failures.delete(ip);
+  const exp = String(Date.now() + SESSION_DAYS * 864e5);
+  res.setHeader('Set-Cookie', `ap_session=${exp}.${sign(exp)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}${req.secure ? '; Secure' : ''}`);
+  res.json({ ok: true });
+});
+app.post('/api/logout', (req, res) => {
+  res.setHeader('Set-Cookie', 'ap_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+  res.json({ ok: true });
+});
+const PUBLIC_PATHS = new Set(['/login', '/login.html', '/styles.css', '/manifest.webmanifest', '/sw.js', '/favicon.ico']);
+app.use((req, res, next) => {
+  if (isLoggedIn(req) || PUBLIC_PATHS.has(req.path) || req.path.startsWith('/icons/')) return next();
+  if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Login required' });
+  res.redirect('/login');
+});
+app.get('/login', (req, res) => (isLoggedIn(req) ? res.redirect('/') : res.sendFile(path.join(__dirname, 'public', 'login.html'))));
+app.get('/api/me', (req, res) => res.json({ passwordProtected: !!APP_PASSWORD }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 

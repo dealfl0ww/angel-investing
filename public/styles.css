@@ -45,10 +45,38 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .portfolio { grid-area: portfolio; }
 .news { grid-area: news; }
 .docs { grid-area: docs; }
+.tabbar { display: none; }
+/* Phone / installed-app layout: one section at a time with a bottom tab bar. */
 @media (max-width: 900px) {
-  .grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "portfolio" "news" "docs"; padding: 12px 16px 32px; }
-  .topbar { padding: 12px 16px; flex-wrap: wrap; }
+  .grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: none; padding: 12px 12px calc(84px + env(safe-area-inset-bottom)); }
+  .grid > .panel { grid-area: auto; display: none; }
+  .grid[data-tab="portfolio"] > .portfolio, .grid[data-tab="news"] > .news, .grid[data-tab="docs"] > .docs { display: block; }
+  .topbar { padding: calc(10px + env(safe-area-inset-top)) 16px 10px; flex-wrap: wrap; gap: 8px; }
+  .brand { font-size: 16px; }
+  .topbar #addInvestment { padding: 7px 12px; font-size: 14px; }
+  .focus { order: 5; width: 100%; }
+  .panel { padding: 16px; }
+  .newslist { max-height: none; }
+  .tabbar {
+    display: grid; grid-template-columns: repeat(3, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+    background: var(--bg); border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  }
+  .tabbar button {
+    background: none; border: 0; color: var(--muted); font: inherit; font-size: 11px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; cursor: pointer;
+  }
+  .tabbar button.on { color: var(--green); }
+  .holdings li { padding: 12px 4px; }
+  input, select, textarea { font-size: 16px; } /* stops iOS zooming into fields */
 }
+@media (display-mode: standalone) { body { -webkit-user-select: none; user-select: none; } input, textarea, .newslist, .doctable { -webkit-user-select: text; user-select: text; } }
+
+/* Login */
+.login-page { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.login { width: min(360px, 100%); display: flex; flex-direction: column; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+.login label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 13px; }
+.login input { font-size: 16px; }
+.login .err { color: var(--red); min-height: 1em; margin: 0; font-size: 14px; }
 
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; min-width: 0; }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -62,6 +90,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: v
 .btn.primary { background: var(--green); border-color: var(--green); color: #000; }
 .btn.danger { color: var(--red); }
 .btn.small { padding: 5px 11px; font-size: 13px; }
+.btn.icon { padding: 7px; line-height: 0; }
 .link { background: none; border: 0; color: var(--green); cursor: pointer; font: inherit; padding: 0 4px; }
 
 /* Portfolio */
